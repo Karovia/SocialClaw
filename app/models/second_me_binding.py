@@ -18,6 +18,7 @@ class SecondMeBinding(Base):
     access_token = Column(String, nullable=False)
     refresh_token = Column(String)
     expires_at = Column(DateTime, nullable=False)
+    scope = Column(String)  # 授权范围
     is_active = Column(Boolean, default=True)
     bound_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

@@ -41,6 +41,8 @@ class UserRegisterRequest(BaseModel):
 class UserResponse(BaseModel):
     """用户响应"""
     user_id: str
+    second_me_user_id: str
     email: str
     username: str
+    avatar_url: Optional[str] = None
     has_second_me_binding: bool
