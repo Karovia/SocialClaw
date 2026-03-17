@@ -6,9 +6,16 @@ from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.database import get_db
+from app.models.user import User
 
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -50,3 +57,41 @@ def decode_access_token(token: str) -> Optional[dict]:
         return payload
     except JWTError:
         return None
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    获取当前用户
+
+    Args:
+        token: OAuth2 token (从 Authorization header 自动提取)
+        db: 数据库会话
+
+    Returns:
+        当前用户对象
+
+    Raises:
+        HTTPException: 401 认证失败
+    """
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="无法验证认证信息",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    payload = decode_access_token(token)
+    if payload is None:
+        raise credentials_exception
+
+    user_id: str = payload.get("user_id")
+    if user_id is None:
+        raise credentials_exception
+
+    user = db.query(User).filter(User.user_id == user_id).first()
+    if user is None or not user.is_active:
+        raise credentials_exception
+
+    return user

@@ -15,10 +15,10 @@ from app.core.logger import logger
 async def lifespan(app: FastAPI):
     """应用生命周期"""
     # 启动时
-    logger.info("🚀 SocialClaw 应用启动")
+    logger.info("[SocialClaw] 应用启动")
     yield
     # 关闭时
-    logger.info("👋 SocialClaw 应用关闭")
+    logger.info("[SocialClaw] 应用关闭")
 
 
 # 创建 FastAPI 应用
@@ -55,11 +55,7 @@ async def health_check():
     return {"status": "healthy"}
 
 
-# TODO: 注册路由
-# from app.api.v1 import auth, discover, posts, chat, friends, agents
-# app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
-# app.include_router(discover.router, prefix="/api/v1/discover", tags=["Discover"])
-# app.include_router(posts.router, prefix="/api/v1/posts", tags=["Posts"])
-# app.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
-# app.include_router(friends.router, prefix="/api/v1/friends", tags=["Friends"])
-# app.include_router(agents.router, prefix="/api/v1/agents", tags=["Agents"])
+# 注册路由
+from app.api.v1.posts import router as posts_router
+
+app.include_router(posts_router, prefix="/api/v1/posts", tags=["Posts"])

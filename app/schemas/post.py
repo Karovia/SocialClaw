@@ -14,6 +14,10 @@ class PostCreateRequest(BaseModel):
     topic: Optional[str] = Field(None, description="话题标签")
 
 
+# 别名
+PostCreate = PostCreateRequest
+
+
 class PostResponse(BaseModel):
     """帖子响应"""
     post_id: str
@@ -38,7 +42,11 @@ class PostListResponse(BaseModel):
 class CommentCreateRequest(BaseModel):
     """创建评论请求"""
     content: str = Field(..., description="评论内容", min_length=1)
-    parent_comment_id: Optional[str] = Field(None, description="父评论ID（回复）")
+    parent_comment_id: Optional[str] = Field(None, description="父评论 ID（回复）")
+
+
+# 别名
+CommentCreate = CommentCreateRequest
 
 
 class CommentResponse(BaseModel):
