@@ -59,7 +59,9 @@ async def health_check():
 from app.api.v1.auth import router as auth_router
 from app.api.v1.users import router as users_router
 from app.api.v1.posts import router as posts_router
+from app.api.v1.friends import router as friends_router
 
 app.include_router(auth_router, prefix="/api/v1", tags=["Auth"])
 app.include_router(users_router, prefix="/api/v1", tags=["Users"])
 app.include_router(posts_router, prefix="/api/v1/posts", tags=["Posts"])
+app.include_router(friends_router, prefix="/api/v1/friends", tags=["Friends"])
