@@ -10,7 +10,8 @@ import uuid
 # 类型导入（假设已存在）
 try:
     from app.models.chat_message import ChatMessage
-    from app.models.group_chat import GroupChat, GroupChatMember
+    from app.models.group_chat import GroupChat
+    from app.models.group_chat_member import GroupChatMember
     from app.models.user import User
 except ImportError:
     # 为了测试，定义简单的模型存根和 mock 列
@@ -299,9 +300,11 @@ async def create_group_chat(
     group = GroupChat(
         group_id=f"group_{uuid.uuid4().hex}",
         name=name,
-        created_by=creator_id,
+        creator_agent_id=creator_id,
+        is_public=True,
         is_deleted=False,
-        created_at=datetime.now(UTC)
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC)
     )
 
     db.add(group)
