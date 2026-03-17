@@ -93,23 +93,15 @@ class TestAuthService:
             mock_client = MagicMock()
             mock_client.post = AsyncMock(return_value=mock_response)
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-            mock_client.__aexit__ = AsyncMock()
+            mock_client.__aexit__ = AsyncMock(return_value=None)
 
             mock_client_class.return_value = mock_client
 
-            # 打印调试信息
-            print("Before calling exchange_code_for_token")
-            print("Mock response json:", mock_response.json.return_value)
-            print("Mock client post:", mock_client.post)
-
             # 调用服务，应该抛出异常（code != 0）
-            try:
-                result = await exchange_code_for_token("invalid_code")
-                print("Result:", result)
-                assert False, "Should have raised an exception"
-            except Exception as e:
-                print("Exception caught:", str(e))
-                assert "oauth.invalid_code" in str(e)
+            with pytest.raises(Exception) as exc_info:
+                await exchange_code_for_token("invalid_code")
+
+            assert "oauth.invalid_code" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_get_user_info_success(self):

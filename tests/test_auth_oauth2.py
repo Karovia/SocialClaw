@@ -11,18 +11,20 @@ from urllib.parse import urlparse, parse_qs
 # 导入应用（假设 app 在 app.main 中）
 from app.main import app
 
+from fastapi.testclient import TestClient
+
 
 class TestOAuth2Login:
     """OAuth2 登录重定向测试"""
 
     def test_oauth2_login_redirect(self):
         """测试 OAuth2 登录重定向到 Second Me"""
-        client = TestClient(app)
+        client = TestClient(app, follow_redirects=False)  # 禁用自动跟随重定向
 
         response = client.get("/api/v1/auth/oauth2/login")
 
-        # 验证状态码
-        assert response.status_code == 302, f"Expected 302 redirect, got {response.status_code}"
+        # 验证状态码（307 或 302 都是重定向）
+        assert response.status_code in [302, 307], f"Expected redirect (302/307), got {response.status_code}"
 
         # 验证 Location header
         location = response.headers.get("location")
@@ -55,11 +57,11 @@ class TestOAuth2Login:
         assert "user.info.shades" in scopes
         assert "user.info.softmemory" in scopes
 
-        print(f"✓ OAuth2 login redirect URL: {location}")
+        print(f"[OK] OAuth2 login redirect URL: {location}")
 
     def test_oauth2_login_url_structure(self):
         """测试 OAuth2 URL 结构（不含 /authorize 等多余路径）"""
-        client = TestClient(app)
+        client = TestClient(app, follow_redirects=False)  # 禁用自动跟随重定向
 
         response = client.get("/api/v1/auth/oauth2/login")
         location = response.headers.get("location")
@@ -67,10 +69,13 @@ class TestOAuth2Login:
 
         # URL 必须是 https://go.second.me/oauth/?xxx 格式
         # 不能是 https://go.second.me/oauth//authorize?xxx
+        assert isinstance(parsed_url.path, str), f"path should be str, got {type(parsed_url.path)}"
         assert not parsed_url.path.endswith("/authorize"), \
             "OAuth2 URL should not contain /authorize suffix"
         assert parsed_url.path == "/oauth/", \
             "OAuth2 URL path should be exactly /oauth/"
+
+        print("[OK] OAuth2 URL structure is correct")
 
 
 if __name__ == "__main__":
