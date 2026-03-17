@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     SECOND_ME_CLIENT_ID: str = ""
     SECOND_ME_CLIENT_SECRET: str = ""
     SECOND_ME_REDIRECT_URI: str = "http://localhost:8000/auth/callback"
+    SECOND_ME_OAUTH_URL: str = "https://go.second.me/oauth/"
     SECOND_ME_API_BASE_URL: str = "https://api.mindverse.com/gate/lab"
 
     # ChromaDB 配置

@@ -3,25 +3,23 @@
 """
 
 import pytest
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 from app.main import app
 
 
-@pytest.fixture
-def client():
-    """测试客户端"""
-    return TestClient(app)
-
-
-def test_root(client):
+@pytest.mark.asyncio
+async def test_root():
     """测试根路由"""
-    response = client.get("/")
-    assert response.status_code == 200
-    assert response.json()["message"] == "Welcome to SocialClaw API"
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.get("/")
+        assert response.status_code == 200
+        assert response.json()["message"] == "Welcome to SocialClaw API"
 
 
-def test_health(client):
+@pytest.mark.asyncio
+async def test_health():
     """测试健康检查"""
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json()["status"] == "healthy"
+    async with AsyncClient(app=app, base_url="http://testserver") as client:
+        response = await client.get("/health")
+        assert response.status_code == 200
+        assert response.json()["status"] == "healthy"
