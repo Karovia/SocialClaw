@@ -64,7 +64,7 @@ export const getCurrentUser = async (): Promise<User> => {
 export const oauth2Login = (): void => {
   // 跳转到后端的 OAuth2 登录端点
   // 后端会重定向到 Second Me 授权，然后回调处理，最后重定向回前端
-  const loginUrl = `${API_BASE_URL.replace('/api/v1', '')}/api/v1/auth/oauth2/login`;
+  const loginUrl = `${API_BASE_URL.replace('/api/v1', '')}/api/v1/oauth2/login`;
   window.location.href = loginUrl;
 };
 
