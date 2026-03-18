@@ -97,6 +97,38 @@ class SecondMeClient:
             logger.error(f"Failed to get shades: {e}")
             return []
 
+    async def get_user_info(self) -> Dict:
+        """
+        获取用户基本信息
+
+        Returns:
+            用户信息字典，包含 userId, email, name, avatarUrl, route 等字段
+            失败时返回空字典
+
+        Response Example:
+        {
+            "userId": "labs_user_xxx",
+            "email": "user@example.com",
+            "name": "用户姓名",
+            "avatarUrl": "https://...",
+            "route": "xxx"
+        }
+        """
+        try:
+            response = await self.client.get("/api/secondme/user/info")
+            response.raise_for_status()
+
+            data = response.json()
+            if data.get("code") == 0 and "data" in data:
+                return data["data"]
+            else:
+                logger.warning(f"Second Me API returned unexpected response: {data}")
+                return {}
+
+        except Exception as e:
+            logger.error(f"Failed to get user info: {e}")
+            return {}
+
     async def generate_post_content(
         self,
         memory_content: str,
@@ -208,18 +240,3 @@ class SecondMeClient:
         """
         key_string = f"external:{object_type}:{object_id}"
         return hashlib.sha256(key_string.encode('utf-8')).hexdigest()
-
-
-# 全局客户端缓存
-@lru_cache(maxsize=128)
-def get_secondme_client(access_token: str) -> SecondMeClient:
-    """
-    获取 Second Me 客户端实例（带缓存）
-
-    Args:
-        access_token: Second Me API 访问令牌
-
-    Returns:
-        SecondMeClient 实例
-    """
-    return SecondMeClient(access_token)

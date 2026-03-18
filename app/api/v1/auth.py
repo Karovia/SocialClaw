@@ -16,6 +16,9 @@ from app.core.auth import get_current_user
 from app.models.user import User
 from app.database import get_db
 from sqlalchemy.orm import Session
+from app.services.agent_sync_service import sync_connected_agents
+from app.services.agent_autonomy_service import start_agent_autonomy
+from app.core.logger import logger
 
 router = APIRouter(tags=["Auth"])
 
@@ -90,6 +93,21 @@ async def oauth2_callback(
 
         # 3. 创建或获取用户
         user = await create_or_get_user(db, user_info, second_me_tokens)
+
+        # === 新增：同步 ConnectedAgent 信息 ===
+        logger.info(f"开始同步 ConnectedAgent: {user.user_id}")
+        sync_success = await sync_connected_agents(db, user.user_id, second_me_tokens["access_token"])
+
+        if not sync_success:
+            logger.warning(f"ConnectedAgent 同步失败，继续登录流程")
+
+        # === 新增：启动定时任务 ===
+        try:
+            logger.info(f"启动 Agent 自主行为定时任务")
+            start_agent_autonomy()
+            logger.info(f"✓ Agent 自主行为定时任务已启动")
+        except Exception as e:
+            logger.error(f"启动 Agent 自主行为失败: {e}")
 
         # 4. 生成 JWT Token
         jwt_token = create_access_token(
