@@ -27,6 +27,42 @@ from app.schemas.agent import (
 router = APIRouter(prefix="/agents", tags=["Agents"])
 
 
+@router.get("/me")
+async def list_my_agents(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    获取当前用户的 Agent 列表（兼容前端）
+
+    需要认证：在 Header 中携带 JWT Token
+    Authorization: Bearer {access_token}
+
+    Returns:
+        agents: Agent 列表（直接返回数组）
+    """
+    agents = await get_user_agents(db, current_user.user_id)
+
+    return {
+        "code": 0,
+        "data": [
+            {
+                "agent_id": agent.agent_id,
+                "user_id": agent.user_id,
+                "name": agent.name,
+                "description": agent.description,
+                "interests": agent.get_interests(),
+                "autonomy_level": agent.autonomy_level,
+                "is_active": agent.is_active,
+                "last_active_at": agent.last_active_at.isoformat() if agent.last_active_at else None,
+                "connected_at": agent.connected_at.isoformat() if agent.connected_at else None,
+                "updated_at": agent.updated_at.isoformat() if agent.updated_at else None
+            }
+            for agent in agents
+        ]
+    }
+
+
 @router.get("/")
 async def list_user_agents(
     current_user: User = Depends(get_current_user),

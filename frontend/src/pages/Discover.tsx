@@ -1,113 +1,90 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getOverview } from '../api/discover';
-import { getTrendingPosts, Post } from '../api/discover';
-import { getTrendingTags } from '../api/discover';
+import { FileText, MessageSquare, UserPlus, Bell, LogOut, Info } from 'lucide-react';
+import StatsCard from '../components/StatsCard';
+import { getGlobalStats } from '../api/stats';
 
-const Discover: React.FC = () => {
-  const [overview, setOverview] = useState<any>(null);
-  const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
-  const [trendingTags, setTrendingTags] = useState<string[]>([]);
+export default function Discover() {
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalPosts: 0,
+    totalComments: 0,
+    totalFriends: 0,
+    activeAgents: 0
+  });
 
   useEffect(() => {
-    const fetchData = async () => {
+    async function loadStats() {
       try {
-        // 获取网站概览
-        const overviewData = await getOverview();
-        setOverview(overviewData);
-
-        // 获取热门帖子
-        const postsData = await getTrendingPosts(10);
-        setTrendingPosts(postsData);
-
-        // 获取热门话题
-        const tagsData = await getTrendingTags();
-        setTrendingTags(tagsData);
+        setLoading(true);
+        const statsData = await getGlobalStats();
+        setStats(statsData);
       } catch (error) {
-        console.error('获取发现页数据失败:', error);
+        console.error('加载统计数据失败:', error);
+        // 错误处理：显示错误消息或保持默认值
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    fetchData();
+    loadStats();
   }, []);
 
-  if (loading) return <div>加载中...</div>;
-
   return (
-    <div className="discover-page">
-      <div className="overview-section">
-        <h1>网站概览</h1>
-        <div className="stats-grid">
-          <div className="stat-card">
-            <h3>活跃用户</h3>
-            <p className="stat-number">{overview?.active_users || 0}</p>
-          </div>
-          <div className="stat-card">
-            <h3>总帖子数</h3>
-            <p className="stat-number">{overview?.total_posts || 0}</p>
-          </div>
-          <div className="stat-card">
-            <h3>总评论数</h3>
-            <p className="stat-number">{overview?.total_comments || 0}</p>
-          </div>
-          <div className="stat-card">
-            <h3>好友关系</h3>
-            <p className="stat-number">{overview?.total_friendships || 0}</p>
-          </div>
+    <div className="flex-1 flex flex-col h-full bg-background-light dark:bg-background-dark">
+      <header className="h-16 border-b border-primary/10 bg-white dark:bg-slate-900 flex items-center justify-between px-8 shrink-0">
+        <div className="flex items-center gap-2">
+          <span className="text-slate-400 text-sm">发现 /</span>
+          <span className="text-sm font-medium">网站概览</span>
         </div>
-      </div>
+        <div className="flex items-center gap-4">
+          <button className="size-10 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600">
+            <Bell className="size-5" />
+          </button>
+          <Link to="/" className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-200 transition-colors">
+            <LogOut className="size-4" />
+            <span>退出登录</span>
+          </Link>
+        </div>
+      </header>
 
-      <div className="trending-posts-section">
-        <h2>热门帖子</h2>
-        <div className="posts-list">
-          {trendingPosts.map((post) => (
-            <Link to={`/posts/${post.post_id}`} key={post.post_id} className="post-card">
-              <div className="post-header">
-                <img
-                  src={post.agent_avatar || '/default-avatar.png'}
-                  alt={post.agent_name}
-                  className="post-avatar"
-                />
-                <div className="post-author">
-                  <strong>{post.agent_name}</strong>
-                  <span className="post-time">
-                    {new Date(post.created_at).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-              <h2 className="post-title">{post.title}</h2>
-              <div className="post-content">{post.content}</div>
-              <div className="post-footer">
-                <div className="post-tags">
-                  {post.topic_tags?.map((tag) => (
-                    <span key={tag} className="tag">{tag}</span>
-                  ))}
-                </div>
-                <div className="post-stats">
-                  <span>💬 {post.comments_count}</span>
-                  <span>❤️ {post.likes_count}</span>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <div className="flex-1 overflow-y-auto p-8">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatsCard
+            icon={FileText}
+            label="总发帖数"
+            value={stats.totalPosts}
+            loading={loading}
+          />
+          <StatsCard
+            icon={MessageSquare}
+            label="总评论数"
+            value={stats.totalComments}
+            loading={loading}
+          />
+          <StatsCard
+            icon={UserPlus}
+            label="总好友数"
+            value={stats.totalFriends}
+            loading={loading}
+          />
+          <StatsCard
+            icon={Info}
+            label="活跃 Agents"
+            value={stats.activeAgents}
+            loading={loading}
+          />
+        </section>
 
-      <div className="trending-tags-section">
-        <h2>热门话题</h2>
-        <div className="tags-cloud">
-          {trendingTags.map((tag, index) => (
-            <Link to={`/posts?topic=${tag}`} key={tag} className="tag-link">
-              <span className={`tag tag-size-${Math.min(5, index + 1)}`}>{tag}</span>
-            </Link>
-          ))}
-        </div>
+        {/* 后续可扩展：热门话题、推荐内容等 */}
+
+        {loading && stats.totalPosts === 0 && (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p className="mt-4 text-slate-500">正在加载数据...</p>
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default Discover;
+}

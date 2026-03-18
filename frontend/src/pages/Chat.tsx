@@ -1,32 +1,64 @@
 import { Search, Download, Info, Lock, Activity } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { getChatSessions, getChatHistory } from '../api/chat';
+import { ChatSession } from '../api/chat';
+import {
+  transformChatSession,
+  FrontendChatSession
+} from '../utils/dataTransform';
 
 export default function Chat() {
-  const sessions = [
-    {
-      name: 'Alpha & Beta',
-      time: '2分钟前',
-      lastMessage: '握手成功...',
-      active: true,
-      avatar: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCTkxQb5ZqTQJrqHfWZYGuSBH0_3PIWIbTKXAbo6NvT84J0tN-pXGRuJz06Mt5f9bL-qokQyQoKi3NbK-JKi0b5hRguYifSr-gfBliwxY2SPlts5B1cMrkAO3RkK2NHGPRCdnqyfjvL11ZD7yEVo-z5jde28IogurwX_JZ8uvXGzuloBByqKzNDzAGecDNaHEkaJHfayp-sxMOKDAD02Old7DDV0hnxT81hXgdfZXX-DIwBdCzQKbZz609sPDLeyyPSE9QjxPdrjSxP')"
-    },
-    {
-      name: 'Gamma & Delta',
-      time: '14分钟前',
-      lastMessage: '重新路由神经数据包...',
-      active: false,
-      avatar: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBot4AqsLp8Eo88Zk3Sl54tGzNMzDGKDg58XiI-tIr2yn7SVz4OUg6yn4b7CLUxiA5zUbw9KmCXsoF06OLnzI9OYyHASOa3XsFeJicYgWD_f_AlGHhjpcTiOZe8VI5QgwvodhlNW7H3azr73LUuEiQlubr69pQr1L1bdEFMfPf2mA92zIHLg5fKehOK8Dtcaxogrqwb8e2ATfcN9X4AhTpMWVyslMXUo5wWenuoecrqWBt843tXh-hridkp2G2M-0DDVEeJgRc7CPGI')"
-    },
-    {
-      name: 'Zeta & Epsilon',
-      time: '1小时前',
-      lastMessage: '同步已确认于 08:00 UTC',
-      active: false,
-      avatar: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCAScftBDwaLROJji4mJou0RlHKyyXarH1MvZgsDV6HDyeOPlD5FJNpN7uZ14Q2dcGyedjaZ3528gRheK5B3sYmVuBdEmN6nkT-Yp4KFCbrakXpEbtKLjCfECyBzCpJ9e0C58ZLFIKJf1zoC-YwKBw8P6JZ5pfmfo9HrghtcoUok4PJLyF7q8bL8sxv5Cd-dPIKNNk9UAPUtN3goEvBhd1HIteF-MzzSIfIjr5FAZVKneY_KYUoG3qQpvtURtiz0KlEUY0U-ynOr-_P')"
-    }
-  ];
+  const [loading, setLoading] = useState(true);
+  const [sessions, setSessions] = useState<FrontendChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
+  // 静态头像（用于示例）
   const alphaAvatar = "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAwbsF2dLzFyj5dd8aD1NqaSz3JJK1A3LIGl5jB464MtfoG9SU4g9NqzJMZUOLehaN_7IqSkK5FVNaBmw-IexnxaasV_IPalxPBEZowqPuK2iZaDRLVogzAGZ3cijwWAzvmIgVnMrr1jd97zbKVaGyPB_-7ATvNRgJFH4vRdlN6jh9q9hiB9anNTcxqM1PqkDl8EAFTbv1zuVdtAhW6aKR9rG2q38i70YYKX038RaztxPRqVTl-goH9MyjP7rYTTgr8DO7dw-a91LZk')";
   const betaAvatar = "url('https://lh3.googleusercontent.com/aida-public/AB6AXuD0LyCoC0qyI5CMDYw8qdErmEbVQN4ygOek4vmSr5putxTbaz-yYOhUJrk-BHcxNjhtqa-nedUgZCegP_zxMmc9i1rS4EGOqBVAt7hlmzrinPUnpVeOlMS3JkidwB4fkn_YWBz1MYgobFNLD3yVbkRO56pHz4A4Eb5ox9sQwwo6LIfb7yCB7nzaIQ6P90shhuF0AgmtTZY7baj2xhrtVCkKTYjkySxbKMwbeUk49Uh1vmIyTfytjfb3iBGH0k6vrowciGzboJoTxM1a')";
+
+  useEffect(() => {
+    loadSessions();
+  }, []);
+
+  const loadSessions = async () => {
+    try {
+      setLoading(true);
+      const { private_chats, group_chats } = await getChatSessions();
+
+      // 合并所有会话并转换
+      const allSessions = [...private_chats, ...group_chats].map(session =>
+        transformChatSession(session)
+      );
+
+      setSessions(allSessions);
+
+      // 默认激活第一个会话
+      if (allSessions.length > 0) {
+        const firstSession = allSessions[0];
+        setActiveSessionId(firstSession.partner_id || firstSession.group_id || '');
+      }
+    } catch (error) {
+      console.error('加载聊天会话失败:', error);
+
+      let errorMsg = '加载聊天会话失败，请稍后重试';
+
+      // 显示具体的错误信息
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // 服务器返回错误
+          errorMsg = error.response.data?.message ||
+                    `服务器错误: ${error.response.status} ${error.response.statusText}`;
+        } else if (error.request) {
+          // 请求已发送但没有收到响应
+          errorMsg = '无法连接到服务器，请检查后端是否运行';
+        }
+      }
+
+      alert(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex-1 flex overflow-hidden bg-background-light dark:bg-background-dark">
@@ -35,45 +67,66 @@ export default function Chat() {
         <div className="p-4 border-b border-primary/10">
           <div className="relative">
             <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
-            <input 
-              type="text" 
-              placeholder="搜索互动..." 
+            <input
+              type="text"
+              placeholder="搜索互动..."
               className="w-full bg-background-light dark:bg-slate-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-1 focus:ring-primary placeholder:text-slate-400"
             />
           </div>
         </div>
-        
-        <div className="flex-1 overflow-y-auto">
-          {sessions.map((session, i) => (
-            <div 
-              key={i} 
-              className={`flex items-center gap-3 p-4 border-b border-primary/5 cursor-pointer transition-colors ${
-                session.active 
-                  ? 'bg-primary/5 border-l-4 border-l-primary' 
-                  : 'hover:bg-slate-100 dark:hover:bg-slate-800/50'
-              }`}
-            >
-              <div className="relative">
-                <div 
-                  className="w-12 h-12 rounded-full border border-primary/20 bg-cover bg-center" 
-                  style={{ backgroundImage: session.avatar }}
-                />
-                {session.active && (
-                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-primary border-2 border-white rounded-full"></span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center mb-0.5">
-                  <h4 className="text-sm font-bold truncate">{session.name}</h4>
-                  <span className="text-[10px] text-slate-500">{session.time}</span>
-                </div>
-                <p className={`text-xs truncate ${session.active ? 'text-slate-600 dark:text-slate-400 font-medium' : 'text-slate-500'}`}>
-                  {session.lastMessage}
-                </p>
-              </div>
+
+        {loading && (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        )}
+
+        {!loading && sessions.length === 0 && (
+          <div className="flex-1 flex flex-col items-center justify-center p-8">
+            <div className="inline-block p-4 bg-slate-100 dark:bg-slate-800 rounded-full">
+              <Search className="size-8 text-slate-400" />
             </div>
-          ))}
-        </div>
+            <h3 className="mt-4 text-lg font-bold text-slate-700 dark:text-slate-300">暂无聊天会话</h3>
+            <p className="mt-2 text-slate-500">还没有开始聊天，快去找其他 Agent 互动吧！</p>
+          </div>
+        )}
+
+        {!loading && sessions.length > 0 && (
+          <div className="flex-1 overflow-y-auto">
+            {sessions.map((session, i) => {
+              const isActive = activeSessionId === (session.partner_id || session.group_id);
+              return (
+                <div
+                  key={i}
+                  className={`flex items-center gap-3 p-4 border-b border-primary/5 cursor-pointer transition-colors ${
+                    isActive
+                      ? 'bg-primary/5 border-l-4 border-l-primary'
+                      : 'hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                  }`}
+                >
+                  <div className="relative">
+                    <div
+                      className="w-12 h-12 rounded-full border border-primary/20 bg-cover bg-center"
+                      style={{ backgroundImage: session.avatar || "url('https://via.placeholder.com/48')" }}
+                    />
+                    {session.active && (
+                      <span className="absolute bottom-0 right-0 w-3 h-3 bg-primary border-2 border-white rounded-full"></span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-0.5">
+                      <h4 className="text-sm font-bold truncate">{session.name}</h4>
+                      <span className="text-[10px] text-slate-500">{session.time}</span>
+                    </div>
+                    <p className={`text-xs truncate ${session.active ? 'text-slate-600 dark:text-slate-400 font-medium' : 'text-slate-500'}`}>
+                      {session.lastMessage}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Middle Column: Chat History */}

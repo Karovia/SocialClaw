@@ -5,10 +5,10 @@ import { Agent } from '../types/agent';
  * 获取当前用户的 Agent 列表
  */
 export const getMyAgents = async (): Promise<Agent[]> => {
-  const response = await api.get('/agents');
+  const response = await api.get('/agents/me'); // 改为 /agents/me
 
   if (response.data.code === 0) {
-    return response.data.data.agents || [];
+    return response.data.data; // 直接返回数组，不是 { agents: [] }
   }
   throw new Error(response.data.message || '获取 Agent 列表失败');
 };

@@ -63,11 +63,13 @@ from app.api.v1.friends import router as friends_router
 from app.api.v1.chat import router as chat_router
 from app.api.v1.agents import router as agents_router
 from app.api.v1.discover import router as discover_router
+from app.api.v1.stats import router as stats_router
 
 app.include_router(auth_router, prefix="/api/v1", tags=["Auth"])
 app.include_router(users_router, prefix="/api/v1", tags=["Users"])
-app.include_router(posts_router, prefix="/api/v1/posts", tags=["Posts"])
-app.include_router(friends_router, prefix="/api/v1/friends", tags=["Friends"])
-app.include_router(chat_router, prefix="/api/v1/chat", tags=["Chat"])
+app.include_router(posts_router, prefix="/api/v1", tags=["Posts"])
+app.include_router(friends_router, prefix="/api/v1", tags=["Friends"])
+app.include_router(chat_router, prefix="/api/v1", tags=["Chat"])
 app.include_router(agents_router, prefix="/api/v1", tags=["Agents"])
-app.include_router(discover_router, prefix="/api/v1/discover", tags=["Discover"])
+app.include_router(discover_router, prefix="/api/v1", tags=["Discover"])
+app.include_router(stats_router, prefix="/api/v1", tags=["Stats"])

@@ -16,13 +16,18 @@
   - SocialClaw JWT Token: 24 小时
 """
 import httpx
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from datetime import datetime, timedelta
 import uuid
+from collections import Counter
+import json
 
 from app.core.config import settings
 from app.models.user import User
 from app.models.second_me_binding import SecondMeBinding
+from app.services.agent_service import create_agent as create_agent_service
+from app.core.secondme_client import SecondMeClient
+from app.database import SessionLocal
 from sqlalchemy.orm import Session
 
 
@@ -213,6 +218,10 @@ async def create_or_get_user(
 
         print("New user created: " + user_id)
 
+        # 首次登录时同步 Second Me Agents
+        import asyncio
+        asyncio.create_task(sync_second_me_agents(user, tokens["access_token"]))
+
     else:
         # ========== 已绑定用户：更新绑定信息 ==========
         print(f"Updating existing user: {user_id}")
@@ -295,3 +304,140 @@ async def refresh_second_me_token(refresh_token: str) -> Dict:
         raise Exception(f"HTTP request failed: {str(e)}")
     except Exception as e:
         raise Exception(f"Token refresh failed: {str(e)}")
+
+
+def extract_interests_from_memories(memories: List[Dict]) -> List[str]:
+    """
+    从软记忆中提取兴趣关键词
+
+    Args:
+        memories: 软记忆列表，每个记忆包含 content 字段
+
+    Returns:
+        List[str]: 兴趣关键词列表（前10个高频词）
+    """
+    keywords = [
+        "AI", "人工智能", "机器学习", "深度学习", "编程", "代码",
+        "技术", "科技", "开发", "工程", "产品", "设计",
+        "创业", "投资", "金融", "商业", "管理",
+        "游戏", "娱乐", "音乐", "电影", "阅读",
+        "运动", "健身", "旅行", "美食", "生活"
+    ]
+
+    # 统计关键词出现频率
+    keyword_counts = Counter()
+
+    # 扫描所有记忆内容
+    for memory in memories:
+        if isinstance(memory, dict) and "content" in memory:
+            content = str(memory["content"]).lower()
+            for keyword in keywords:
+                if keyword.lower() in content:
+                    keyword_counts[keyword] += 1
+
+    # 返回前10个高频关键词
+    top_keywords = [keyword for keyword, count in keyword_counts.most_common(10)]
+    return top_keywords
+
+
+async def sync_second_me_agents(user: User, access_token: str):
+    """
+    同步 Second Me Agent - 在独立的数据库会话中运行
+
+    Args:
+        user: 用户对象
+        access_token: Second Me Access Token
+    """
+    db = None
+    try:
+        # 创建新的数据库会话（不与主流程共享）
+        db = SessionLocal()
+
+        print(f"Starting to sync agents for user: {user.user_id}")
+
+        # 获取用户的兴趣标签（shades）
+        async with SecondMeClient(access_token) as client:
+            shades = await client.get_shades()
+            print(f"Retrieved shades: {shades}")
+
+            # 获取软记忆（限制50条）
+            memories = await client.get_soft_memory(limit=50)
+            print(f"Retrieved {len(memories)} memories")
+
+            # 提取记忆中的兴趣关键词
+            memory_interests = extract_interests_from_memories(memories)
+            print(f"Extracted interests from memories: {memory_interests}")
+
+            # 合并兴趣标签（去重）
+            all_interests = list(set(shades + memory_interests))
+            print(f"All interests (merged): {all_interests}")
+
+            # 获取用户已有的 Agent 兴趣
+            existing_agents = await get_user_existing_agents(db, user.user_id)
+            existing_interests = set()
+            for agent in existing_agents:
+                if agent.interests:
+                    interests = json.loads(agent.interests)
+                    if interests:
+                        existing_interests.add(interests[0])  # 假设第一个兴趣是主要兴趣
+
+            print(f"Existing agent interests: {existing_interests}")
+
+            # 为每个兴趣创建 Agent（最多5个，跳过已存在的）
+            created_count = 0
+            for interest in all_interests:
+                if interest in existing_interests:
+                    print(f"Agent for interest '{interest}' already exists, skipping")
+                    continue
+
+                if created_count >= 5:
+                    print("Reached maximum of 5 agents, stopping")
+                    break
+
+                # 创建 Agent 名称和描述
+                agent_name = f"{user.username}的{interest}分身"
+                agent_description = f"专注于{interest}领域的智能体，基于用户的软记忆自动生成内容"
+
+                # 创建新 Agent
+                await create_agent_service(
+                    db=db,
+                    user_id=user.user_id,
+                    name=agent_name,
+                    interests=[interest],
+                    description=agent_description,
+                    autonomy_level="85"
+                )
+
+                created_count += 1
+                print(f"Created agent: {agent_name}")
+
+            print(f"Sync completed. Created {created_count} new agents for user {user.user_id}")
+
+    except Exception as e:
+        # 详细记录错误
+        print(f"Error syncing agents for user {user.user_id}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        # 确保会话关闭
+        if db is not None:
+            db.close()
+
+
+async def get_user_existing_agents(db: Session, user_id: str):
+    """
+    获取用户已有的 Agent 列表
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+
+    Returns:
+        List[ConnectedAgent]: Agent 列表
+    """
+    from app.models.connected_agent import ConnectedAgent
+    agents = db.query(ConnectedAgent).filter(
+        ConnectedAgent.user_id == user_id,
+        ConnectedAgent.is_active == True
+    ).all()
+    return agents

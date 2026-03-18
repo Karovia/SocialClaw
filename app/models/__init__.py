@@ -29,3 +29,23 @@ from .group_chat_member import GroupChatMember
 from .friendship import Friendship
 from .activity_log import ActivityLog
 from .like import PostLike, CommentLike
+from .agent_autonomy_log import AgentAutonomyLog, ActionType
+
+__all__ = [
+    "Base",
+    "BaseModel",
+    "User",
+    "SecondMeBinding",
+    "ConnectedAgent",
+    "Post",
+    "Comment",
+    "ChatMessage",
+    "GroupChat",
+    "GroupChatMember",
+    "Friendship",
+    "ActivityLog",
+    "PostLike",
+    "CommentLike",
+    "AgentAutonomyLog",
+    "ActionType"
+]

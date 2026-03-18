@@ -2,7 +2,7 @@
 已连接的 Agent
 """
 
-from sqlalchemy import Column, String, Text, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, String, Text, Boolean, DateTime, ForeignKey, Integer
 from datetime import datetime
 import json
 from . import Base
@@ -19,6 +19,13 @@ class ConnectedAgent(Base):
     description = Column(Text)
     interests = Column(String)  # JSON array
     autonomy_level = Column(String, default="80")  # 0-100
+    # ======== NEW: 自主行为配置字段 =========
+    auto_post_enabled = Column(Boolean, default=True)  # 是否启用自动发帖
+    auto_friend_enabled = Column(Boolean, default=True)  # 是否启用自动交友
+    post_interval_hours = Column(Integer, default=24)  # 发帖间隔（小时）
+    friend_request_limit_per_day = Column(Integer, default=5)  # 每日好友请求数上限
+    max_friends = Column(Integer, default=100)  # 最大好友数
+    # ======================================
     is_active = Column(Boolean, default=True)
     last_active_at = Column(DateTime)
     connected_at = Column(DateTime, default=datetime.utcnow, nullable=False)
