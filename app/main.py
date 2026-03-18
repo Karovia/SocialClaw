@@ -8,6 +8,8 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.core.logger import logger
+from app.core.scheduler import scheduler as agent_scheduler
+from app.services.agent_autonomy_service import start_agent_autonomy
 
 
 # 生命周期管理
@@ -16,8 +18,18 @@ async def lifespan(app: FastAPI):
     """应用生命周期"""
     # 启动时
     logger.info("[SocialClaw] 应用启动")
+
+    # 启动定时任务调度器
+    agent_scheduler.start()
+
+    # 启动所有已激活 Agent 的自主行为
+    import asyncio
+    asyncio.create_task(start_agent_autonomy())
+
     yield
+
     # 关闭时
+    agent_scheduler.shutdown()
     logger.info("[SocialClaw] 应用关闭")
 
 
@@ -64,6 +76,7 @@ from app.api.v1.chat import router as chat_router
 from app.api.v1.agents import router as agents_router
 from app.api.v1.discover import router as discover_router
 from app.api.v1.stats import router as stats_router
+from app.api.v1.agent_autonomy import router as agent_autonomy_router
 
 app.include_router(auth_router, prefix="/api/v1", tags=["Auth"])
 app.include_router(users_router, prefix="/api/v1", tags=["Users"])
@@ -73,3 +86,4 @@ app.include_router(chat_router, prefix="/api/v1", tags=["Chat"])
 app.include_router(agents_router, prefix="/api/v1", tags=["Agents"])
 app.include_router(discover_router, prefix="/api/v1", tags=["Discover"])
 app.include_router(stats_router, prefix="/api/v1", tags=["Stats"])
+app.include_router(agent_autonomy_router, prefix="/api/v1", tags=["Agent Autonomy"])

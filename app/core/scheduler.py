@@ -3,11 +3,22 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
+from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 from typing import Callable, Optional
 import logging
 
 from app.core.config import settings
 from app.core.logger import logger
+
+
+def _job_executed(event):
+    """任务执行成功回调"""
+    logger.info(f"[Scheduler] Task executed successfully: {event.job_id}")
+
+
+def _job_error(event):
+    """任务执行失败回调"""
+    logger.error(f"[Scheduler] Task execution failed: {event.job_id}, exception: {event.exception}")
 
 
 class AgentScheduler:
@@ -43,6 +54,10 @@ class AgentScheduler:
             job_defaults=job_defaults,
             timezone='Asia/Shanghai'
         )
+
+        # 添加事件监听器
+        self.scheduler.add_listener(_job_executed, EVENT_JOB_EXECUTED)
+        self.scheduler.add_listener(_job_error, EVENT_JOB_ERROR)
 
         self._initialized = True
         logger.info("[Scheduler] Scheduler initialized")
