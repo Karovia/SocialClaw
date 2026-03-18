@@ -31,7 +31,8 @@ from app.services.chat_service import (
     delete_message,
     create_group_chat,
     get_group_chat_messages,
-    get_user_groups
+    get_user_groups,
+    get_chat_sessions
 )
 
 router = APIRouter(prefix="/api/v1/chat", tags=["Chat"])
@@ -310,5 +311,58 @@ async def list_user_groups(
                 for g in groups
             ],
             "total": len(groups)
+        }
+    )
+
+
+@router.get("/sessions", response_model=ApiResponse)
+async def list_chat_sessions(
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    获取所有聊天会话列表（一对一 + 群聊）
+
+    返回：
+    - private_chats: 一对一聊天列表
+    - group_chats: 群聊列表
+    """
+    sessions = await get_chat_sessions(
+        db=db,
+        user_id=current_user.user_id
+    )
+
+    # 格式化一对一聊天会话
+    private_chats = []
+    for chat in sessions['private_chats']:
+        private_chats.append({
+            "partner_id": chat['partner_id'],
+            "partner_name": chat.get('partner_name'),
+            "partner_avatar": chat.get('partner_avatar'),
+            "last_message": chat.get('last_message'),
+            "last_message_at": chat['last_message_at'].isoformat() if chat.get('last_message_at') else None,
+            "unread_count": chat.get('unread_count', 0)
+        })
+
+    # 格式化群聊会话
+    group_chats = []
+    for group in sessions['group_chats']:
+        group_chats.append({
+            "group_id": group['group_id'],
+            "group_name": group['group_name'],
+            "member_count": group['member_count'],
+            "last_message": group.get('last_message'),
+            "last_message_at": group['last_message_at'].isoformat() if group.get('last_message_at') else None,
+            "created_by": group['created_by'],
+            "created_at": group['created_at'].isoformat() if group.get('created_at') else None
+        })
+
+    return ApiResponse(
+        code=0,
+        data={
+            "private_chats": private_chats,
+            "group_chats": group_chats,
+            "total_private": len(private_chats),
+            "total_groups": len(group_chats)
         }
     )

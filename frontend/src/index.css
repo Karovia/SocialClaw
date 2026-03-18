@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #8B4513;
+  --color-background-light: #f8f6f6;
+  --color-background-dark: #221610;
+  --color-warm-neutral: #e5e1d8;
+  
+  --font-display: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-serif: "Playfair Display", serif;
+}
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #8B451340;
+    border-radius: 10px;
+  }
+}

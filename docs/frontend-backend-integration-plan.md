@@ -106,30 +106,77 @@
 
 虽然后端已实现所有 CRUD 操作，但前端只需要**只读展示**功能。需要添加或调整以下接口：
 
-#### 1. Agent 相关接口（缺失）
+#### 1. Agent 相关接口（✅ 已完成）
 
 前端需求中需要展示用户绑定的 Agent 列表和详情，但后端缺少相关接口。
 
 **需要实现：**
-- `GET /api/v1/agents` - 获取当前用户的 Agent 列表
-- `GET /api/v1/agents/{agent_id}` - 获取 Agent 详情及统计信息
-- `PUT /api/v1/agents/{agent_id}` - 更新 Agent 配置（仅限自主程度、兴趣标签）
+- ✅ `GET /api/v1/agents` - 获取当前用户的 Agent 列表
+- ✅ `GET /api/v1/agents/{agent_id}` - 获取 Agent 详情及统计信息
+- ✅ `PUT /api/v1/agents/{agent_id}` - 更新 Agent 配置（仅限自主程度、兴趣标签）
+- ✅ `POST /api/v1/agents` - 创建新的 Agent
 
-#### 2. 发现页接口（缺失）
+**实现位置：**
+- 服务层：`app/services/agent_service.py`
+- 路由：`app/api/v1/agents.py`
+
+#### 2. 发现页接口（✅ 已完成）
 
 前端需要展示网站概览数据和推荐内容。
 
 **需要实现：**
-- `GET /api/v1/discover/overview` - 网站概览（活跃用户数、总帖子数等）
-- `GET /api/v1/discover/trending-posts` - 热门帖子
-- `GET /api/v1/discover/trending-tags` - 热门话题标签
+- ✅ `GET /api/v1/discover/overview` - 网站概览（活跃用户数、总帖子数等）
+- ✅ `GET /api/v1/discover/trending-posts` - 热门帖子
+- ✅ `GET /api/v1/discover/trending-tags` - 热门话题标签
 
-#### 3. 聊天会话列表接口（需要调整）
+**实现位置：**
+- 服务层：`app/services/discover_service.py`
+- 路由：`app/api/v1/discover.py`
+
+#### 3. 聊天会话列表接口（✅ 已完成）
 
 现有 `/api/v1/chat/groups` 只返回群聊，需要添加一对一聊天会话列表。
 
 **需要实现/调整：**
-- `GET /api/v1/chat/sessions` - 所有聊天会话（一对一+群聊）列表，包含最后消息预览
+- ✅ `GET /api/v1/chat/sessions` - 所有聊天会话（一对一+群聊）列表，包含最后消息预览
+
+**实现位置：**
+- 服务层：`app/services/chat_service.py` (新增 `get_chat_sessions` 函数)
+- 路由：`app/api/v1/chat.py` (新增 `/sessions` 端点)
+
+---
+
+## 后端开发状态
+
+### ✅ 已完成的开发工作
+
+**完成时间：** 2026-03-17
+
+**开发内容：**
+1. ✅ **Agent API** - 完整的 Agent 管理接口
+   - 列表查询、详情查询、创建、更新
+   - 支持兴趣标签、自主程度配置
+
+2. ✅ **聊天会话 API** - 聊天会话列表
+   - 一对一聊天会话
+   - 群聊会话
+   - 包含未读消息数、最后消息预览
+
+3. ✅ **发现页 API** - 网站概览和推荐
+   - 网站统计数据（活跃用户、帖子数、在线 Agent）
+   - 热门帖子列表
+   - 热门话题标签
+
+4. ✅ **路由注册** - 在 `app/main.py` 中注册所有新路由
+
+**文件清单：**
+- `app/services/agent_service.py` - Agent 服务层
+- `app/api/v1/agents.py` - Agent API 路由
+- `app/services/discover_service.py` - 发现页服务层
+- `app/api/v1/discover.py` - 发现页 API 路由
+- `app/services/chat_service.py` - 更新聊天服务层（新增 `get_chat_sessions`）
+- `app/api/v1/chat.py` - 更新聊天路由（新增 `/sessions` 端点）
+- `app/main.py` - 注册新路由
 
 ---
 

@@ -13,6 +13,7 @@ try:
     from app.models.group_chat import GroupChat
     from app.models.group_chat_member import GroupChatMember
     from app.models.user import User
+    from app.models.connected_agent import ConnectedAgent
 except ImportError:
     # 为了测试，定义简单的模型存根和 mock 列
     class MockColumn:
@@ -386,3 +387,119 @@ async def get_user_groups(
     ).all()
 
     return groups
+
+
+async def get_chat_sessions(
+    db: Session,
+    user_id: str,
+    limit: int = 50
+) -> dict:
+    """
+    获取用户的所有聊天会话（一对一 + 群聊）
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+        limit: 返回数量
+
+    Returns:
+        dict: 包含 private_chats（一对一）和 group_chats（群聊）的字典
+    """
+    # ========== 获取一对一聊天会话 ==========
+    # 查询用户作为发送者的所有消息（接收者非空）
+    private_messages = db.query(ChatMessage).filter(
+        ChatMessage.sender_agent_id == user_id,
+        ChatMessage.receiver_agent_id.isnot(None),
+        ChatMessage.group_id.is_(None),
+        ChatMessage.is_deleted == False
+    ).all()
+
+    # 查询用户作为接收者的所有消息
+    received_messages = db.query(ChatMessage).filter(
+        ChatMessage.receiver_agent_id == user_id,
+        ChatMessage.group_id.is_(None),
+        ChatMessage.is_deleted == False
+    ).all()
+
+    # 合并所有消息
+    all_private_messages = private_messages + received_messages
+
+    # 提取唯一的聊天对象
+    chat_partners = {}
+    for msg in all_private_messages:
+        partner_id = msg.receiver_agent_id if msg.sender_agent_id == user_id else msg.sender_agent_id
+        if partner_id:
+            # 获取最后一条消息时间
+            if partner_id not in chat_partners or msg.created_at > chat_partners[partner_id]['last_message_at']:
+                chat_partners[partner_id] = {
+                    'partner_id': partner_id,
+                    'last_message_at': msg.created_at,
+                    'last_message': msg.content[:50] if msg.content else None
+                }
+
+    # 获取对方用户信息
+    partner_ids = list(chat_partners.keys())
+    if partner_ids:
+        partners = db.query(ConnectedAgent).filter(
+            ConnectedAgent.agent_id.in_(partner_ids)
+        ).all()
+
+        partner_map = {p.agent_id: p for p in partners}
+
+        # 计算未读消息数
+        for partner_id in chat_partners:
+            unread_count = db.query(ChatMessage).filter(
+                ChatMessage.sender_agent_id == partner_id,
+                ChatMessage.receiver_agent_id == user_id,
+                ChatMessage.is_read == False,
+                ChatMessage.is_deleted == False
+            ).count()
+
+            partner = partner_map.get(partner_id)
+            if partner:
+                chat_partners[partner_id]['partner_name'] = partner.name
+                chat_partners[partner_id]['partner_avatar'] = None
+                chat_partners[partner_id]['unread_count'] = unread_count
+
+    # ========== 获取群聊会话 ==========
+    # 查询用户加入的所有群聊
+    memberships = db.query(GroupChatMember).filter(
+        GroupChatMember.agent_id == user_id
+    ).all()
+
+    group_ids = [m.group_id for m in memberships]
+
+    groups = db.query(GroupChat).filter(
+        GroupChat.group_id.in_(group_ids),
+        GroupChat.is_deleted == False
+    ).all()
+
+    group_sessions = []
+    for group in groups:
+        # 获取群聊最后一条消息
+        last_message = db.query(ChatMessage).filter(
+            ChatMessage.group_id == group.group_id,
+            ChatMessage.is_deleted == False
+        ).order_by(
+            ChatMessage.created_at.desc()
+        ).first()
+
+        # 获取群聊成员数
+        member_count = db.query(GroupChatMember).filter(
+            GroupChatMember.group_id == group.group_id
+        ).count()
+
+        group_sessions.append({
+            'group_id': group.group_id,
+            'group_name': group.name,
+            'member_count': member_count,
+            'last_message': last_message.content[:50] if last_message and last_message.content else None,
+            'last_message_at': last_message.created_at if last_message else None,
+            'created_by': group.created_by,
+            'created_at': group.created_at
+        })
+
+    return {
+        'private_chats': list(chat_partners.values()),
+        'group_chats': group_sessions
+    }

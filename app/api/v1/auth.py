@@ -17,7 +17,7 @@ from app.models.user import User
 from app.database import get_db
 from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter(tags=["Auth"])
 
 
 @router.get("/oauth2/login")
@@ -65,14 +65,13 @@ async def oauth2_callback(
     2. 使用 access_token 获取用户信息
     3. 创建或获取 SocialClaw 用户账号
     4. 保存 Second Me 绑定信息
-    5. 生成 JWT Token 并返回
+    5. 生成 JWT Token 并重定向到前端
 
     Parameters:
     - code: Second Me 授权码（有效期 5 分钟）
 
     Returns:
-    - access_token: SocialClaw JWT Token
-    - user_info: 用户信息
+    - 重定向到前端，携带 access_token 和 user_info
     """
     from app.services.auth_service import (
         exchange_code_for_token,
@@ -80,6 +79,7 @@ async def oauth2_callback(
         create_or_get_user
     )
     from app.core.auth import create_access_token
+    from urllib.parse import urlencode
 
     try:
         # 1. 用 code 换取 Second Me Token
@@ -100,26 +100,27 @@ async def oauth2_callback(
             }
         )
 
-        return {
-            "code": 0,
-            "data": {
-                "access_token": jwt_token,
-                "token_type": "bearer",
-                "expires_in": 86400,  # 24 小时
-                "user_info": {
-                    "user_id": user.user_id,
-                    "second_me_user_id": user.second_me_user_id,
-                    "email": user.email,
-                    "username": user.username,
-                    "avatar_url": user.avatar_url,
-                    "created_at": user.created_at.isoformat() if user.created_at else None
-                }
-            }
-        }
+        # 5. 构造重定向到前端的 URL，携带 Token 和用户信息
+        # 注意：将敏感信息放在 URL hash 中，不会发送到服务器
+        redirect_params = urlencode({
+            "access_token": jwt_token,
+            "user_id": user.user_id,
+            "username": user.username or "",
+            "avatar_url": user.avatar_url or "",
+            "email": user.email or ""
+        })
+
+        frontend_url = f"{settings.FRONTEND_URL}/login?{redirect_params}"
+
+        print(f"✓ OAuth2 callback successful for user {user.user_id}")
+        print(f"✓ Redirecting to: {frontend_url}")
+
+        return RedirectResponse(url=frontend_url)
 
     except HTTPException:
         raise
     except Exception as e:
+        print(f"✗ OAuth2 callback failed: {str(e)}")
         raise HTTPException(
             status_code=400,
             detail=f"OAuth2 授权失败: {str(e)}"
