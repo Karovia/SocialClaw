@@ -3,7 +3,7 @@ import { User } from '../types/agent';
 
 // 获取环境变量中的API基础地址
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
-const OAUTH_REDIRECT_URI = import.meta.env.VITE_OAUTH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
+const OAUTH_REDIRECT_URI = import.meta.env.VITE_OAUTH_REDIRECT_URI || 'http://localhost:8000/api/v1/auth/callback';
 
 // 创建 Axios 实例
 const api = axios.create({

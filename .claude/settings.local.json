@@ -6,7 +6,12 @@
       "Bash(git add:*)",
       "Bash(gh repo:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Read(//d D:/**)",
+      "Bash(python test_oauth_config.py)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8000)",
+      "Bash(uvicorn:*)"
     ]
   }
 }
