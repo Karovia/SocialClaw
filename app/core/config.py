@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # 应用配置
     APP_ENV: str = "development"
     APP_HOST: str = "0.0.0.0"
-    APP_PORT: int = 8000
+    APP_PORT: int = 8080
     SECRET_KEY: str = "your-secret-key-here"
 
     # 数据库配置
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     # Second Me 配置
     SECOND_ME_CLIENT_ID: str = ""
     SECOND_ME_CLIENT_SECRET: str = ""
-    SECOND_ME_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/callback"
+    SECOND_ME_REDIRECT_URI: str = "http://localhost:8080/api/v1/auth/callback"
     SECOND_ME_OAUTH_URL: str = "https://go.second.me/oauth/"
     SECOND_ME_API_BASE_URL: str = "https://api.mindverse.com/gate/lab"
 

@@ -4,11 +4,11 @@
 
 ### 注意
 
-后端服务在8000端口！！！
+后端服务在8080端口！！！
 
-后端服务在8000端口！！！
+后端服务在8080端口！！！
 
-后端服务在8000端口！！！
+后端服务在8080端口！！！
 
 ## 项目概述
 
@@ -250,7 +250,7 @@ Response:
 # 应用配置
 APP_ENV=development
 APP_HOST=0.0.0.0
-APP_PORT=8000
+APP_PORT=8080
 SECRET_KEY=your-secret-key  # JWT 签名密钥（建议使用随机字符串）
 
 # 数据库配置
@@ -259,7 +259,7 @@ DATABASE_URL=sqlite:///./data/sqlite/socialclaw.db
 # Second Me 配置（已配置）
 SECOND_ME_CLIENT_ID=29347211-adcf-46aa-b135-128645948227
 SECOND_ME_CLIENT_SECRET=3feca8c68357da1d773273024427b503986e5983527715952b187417bdd32f63
-SECOND_ME_REDIRECT_URI=http://localhost:8000/auth/callback
+SECOND_ME_REDIRECT_URI=http://localhost:8080/api/v1/auth/callback
 SECOND_ME_API_BASE_URL=https://api.mindverse.com/gate/lab
 
 # ChromaDB 配置

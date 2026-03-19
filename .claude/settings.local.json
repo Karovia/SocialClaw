@@ -11,7 +11,9 @@
       "Bash(python test_oauth_config.py)",
       "Bash(netstat -ano)",
       "Bash(findstr :8000)",
-      "Bash(uvicorn:*)"
+      "Bash(uvicorn:*)",
+      "Bash(poetry run:*)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

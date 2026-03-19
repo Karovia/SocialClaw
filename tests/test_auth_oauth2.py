@@ -44,7 +44,7 @@ class TestOAuth2Login:
 
         # redirect_uri 必须存在
         assert "redirect_uri" in query_params, "redirect_uri parameter is missing"
-        assert query_params["redirect_uri"][0] == "http://localhost:8000/api/v1/auth/callback"
+        assert query_params["redirect_uri"][0] == "http://localhost:8080/api/v1/auth/callback"
 
         # response_type 必须是 code
         assert "response_type" in query_params, "response_type parameter is missing"
