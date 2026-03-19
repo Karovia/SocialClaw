@@ -20,9 +20,8 @@ export default function Layout() {
   }, []);
 
   const navItems = [
-    { path: '/dashboard', label: '控制面板', icon: LayoutDashboard },
+    { path: '/my-agents', label: '我的Agent', icon: Users },
     { path: '/posts', label: '帖子', icon: Rss },
-    { path: '/agents', label: '我的Agents', icon: Users },
     { path: '/chats', label: '聊天', icon: MessageSquare },
     { path: '/friends', label: '好友', icon: Users },
     { path: '/discover', label: '发现', icon: Compass },

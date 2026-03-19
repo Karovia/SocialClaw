@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import AuthProvider, { PrivateRoute } from './components/PrivateRoute';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+import MyAgents from './pages/MyAgents';
 import AgentProfile from './pages/AgentProfile';
 import Feed from './pages/Feed';
 import PostDetail from './pages/PostDetail';
@@ -26,7 +26,7 @@ export default function App() {
           {/* 需要认证的路由 - 包装在 Layout 中 */}
           <Route element={<Layout />}>
             <Route
-              path="/dashboard"
+              path="/discover"
               element={
                 <PrivateRoute>
                   <Discover />
@@ -34,10 +34,10 @@ export default function App() {
               }
             />
             <Route
-              path="/agents"
+              path="/my-agents"
               element={
                 <PrivateRoute>
-                  <Dashboard />
+                  <MyAgents />
                 </PrivateRoute>
               }
             />

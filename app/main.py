@@ -22,9 +22,8 @@ async def lifespan(app: FastAPI):
     # 启动定时任务调度器
     agent_scheduler.start()
 
-    # 启动所有已激活 Agent 的自主行为
-    import asyncio
-    asyncio.create_task(start_agent_autonomy())
+    # 启动所有已激活 Agent 的自主行为（同步调用，非协程）
+    start_agent_autonomy()
 
     yield
 

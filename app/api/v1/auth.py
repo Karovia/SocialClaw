@@ -20,7 +20,7 @@ from app.services.agent_sync_service import sync_connected_agents
 from app.services.agent_autonomy_service import start_agent_autonomy
 from app.core.logger import logger
 
-router = APIRouter(tags=["Auth"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.get("/oauth2/login")

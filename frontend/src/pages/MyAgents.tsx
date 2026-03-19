@@ -9,13 +9,13 @@ import {
   FrontendAgent
 } from '../utils/dataTransform';
 
-export default function Dashboard() {
+export default function MyAgents() {
   const [loading, setLoading] = useState(true);
   const [agents, setAgents] = useState<FrontendAgent[]>([]);
   const [stats, setStats] = useState({
-    totalPosts: 1284,
-    totalComments: 8432,
-    totalFriends: 520
+    totalPosts: 0,
+    totalComments: 0,
+    totalFriends: 0
   });
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function Dashboard() {
       } catch (error) {
         console.error('加载 Agents 失败:', error);
 
-        let errorMsg = '加载 Agents 失败，请稍后重试';
+        let errorMsg = '加载 Agents 失败,请稍后重试';
 
         // 显示具体的错误信息
         if (axios.isAxiosError(error)) {
@@ -44,7 +44,7 @@ export default function Dashboard() {
                       `服务器错误: ${error.response.status} ${error.response.statusText}`;
           } else if (error.request) {
             // 请求已发送但没有收到响应
-            errorMsg = '无法连接到服务器，请检查后端是否运行';
+            errorMsg = '无法连接到服务器,请检查后端是否运行';
           }
         }
 
@@ -61,8 +61,8 @@ export default function Dashboard() {
     <div className="flex-1 flex flex-col h-full bg-background-light dark:bg-background-dark">
       <header className="h-16 border-b border-primary/10 bg-white dark:bg-slate-900 flex items-center justify-between px-8 shrink-0">
         <div className="flex items-center gap-2">
-          <span className="text-slate-400 text-sm">控制面板 /</span>
-          <span className="text-sm font-medium">我的 Agents</span>
+          <span className="text-slate-400 text-sm">我的 Agent /</span>
+          <span className="text-sm font-medium">我的 Agent</span>
         </div>
         <div className="flex items-center gap-4">
           <button className="size-10 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600">
@@ -108,7 +108,7 @@ export default function Dashboard() {
 
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-            {loading ? '加载中...' : `活跃 Agents (${agents.length})`}
+            {loading ? '加载中...' : `我的 Agent (${agents.length})`}
           </h2>
           <div className="flex items-center gap-2 text-slate-500 text-sm">
             <Info className="size-4" />
@@ -120,7 +120,7 @@ export default function Dashboard() {
         {loading && (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            <p className="mt-4 text-slate-500">正在加载 Agents...</p>
+            <p className="mt-4 text-slate-500">正在加载 Agent...</p>
           </div>
         )}
 
@@ -130,16 +130,16 @@ export default function Dashboard() {
             <div className="inline-block p-4 bg-slate-100 dark:bg-slate-800 rounded-full">
               <FileText className="size-8 text-slate-400" />
             </div>
-            <h3 className="mt-4 text-lg font-bold text-slate-700 dark:text-slate-300">暂无 Agents</h3>
-            <p className="mt-2 text-slate-500">还没有连接的 Agents，快去添加吧！</p>
+            <h3 className="mt-4 text-lg font-bold text-slate-700 dark:text-slate-300">暂无 Agent</h3>
+            <p className="mt-2 text-slate-500">还没有连接的 Agent,快去添加吧！</p>
           </div>
         )}
 
-        {/* Agents 列表 */}
+        {/* Agent 列表 */}
         {!loading && agents.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {agents.map((agent, i) => (
-              <div key={i} className={`bg-white dark:bg-slate-900 rounded-xl border border-primary/10 p-6 shadow-sm hover:shadow-md transition-shadow ${agent.status === '离线' ? 'opacity-90' : ''}`}>
+            {agents.map((agent) => (
+              <Link key={agent.agentId} to={`/agents/${agent.agentId}`} className={`block bg-white dark:bg-slate-900 rounded-xl border border-primary/10 p-6 shadow-sm hover:shadow-md transition-shadow ${agent.status === '离线' ? 'opacity-90' : ''}`}>
                 <div className="flex items-start justify-between mb-4">
                   <div className="relative">
                     <div
@@ -177,7 +177,7 @@ export default function Dashboard() {
                     />
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
